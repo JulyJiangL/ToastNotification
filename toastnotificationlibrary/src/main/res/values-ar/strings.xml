@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">toastNotificationLibrary</string>
+    <string name="code_success">تم</string>
+    <string name="code_coin_no"> نقص الذهب</string>
+    <string name="cannot_update">لا يمكن تغيير هذه السمة</string>
+    <string name="incorrect_invitation_code">رمز الدعوة غير صحيح</string>
+    <string name="invitation_code_filled">تم ملء رمز الدعوة ، يرجى إكمال أول شحن</string>
+    <string name="invitation_completed">تم الانتهاء من الدعوة</string>
+    <string name="files_exceeded">عدد الملفات المحملة التي تم تجاوزها</string>
+</resources>

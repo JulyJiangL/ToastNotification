@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">toastNotificationLibrary</string>
+    <string name="code_success">Success</string>
+    <string name="code_coin_no">Shortage of gold coins</string>
+    <string name="cannot_update">Cannot change this attribute</string>
+    <string name="incorrect_invitation_code">Incorrect invitation code</string>
+    <string name="invitation_code_filled">The invitation code has been filled, please complete the first recharge</string>
+    <string name="invitation_completed">Invitation completed</string>
+    <string name="files_exceeded">Number of uploaded files exceeded</string>
 </resources>
