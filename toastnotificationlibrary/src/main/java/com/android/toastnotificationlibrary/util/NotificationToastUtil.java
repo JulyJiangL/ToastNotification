@@ -119,6 +119,7 @@ public class NotificationToastUtil {
     private static int page = 0;
 
     public static void toastTime(final Activity mActivity, final NotificationEntity entity) {
+        Log.e("entry-toast",entity.get_$0().toString());
         int number = entity.get_$0().size() * 2100;
         /**
          * CountDownTimer timer = new CountDownTimer(number, 2100)中，

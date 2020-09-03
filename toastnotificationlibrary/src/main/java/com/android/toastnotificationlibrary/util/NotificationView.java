@@ -1,0 +1,139 @@
+package com.android.toastnotificationlibrary.util;
+
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.app.Activity;
+import android.content.res.Resources;
+import android.os.CountDownTimer;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import com.android.toastnotificationlibrary.R;
+import com.android.toastnotificationlibrary.entity.NotificationEntity;
+import com.blankj.utilcode.util.Utils;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
+
+public class NotificationView {
+
+    private static int page = 0;
+
+    private static void showView(final Activity mActivity, final View view) {
+        /*创建提示消息View*/
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        layoutParams.setMargins(0, getStatusBarHeight(), 0, 0);
+        view.setLayoutParams(layoutParams);
+        /*创建属性动画,从显示到隐藏*/
+        ObjectAnimator bottomToTop = ObjectAnimator.ofFloat(view, "alpha", 1, 0).setDuration(500);
+        /*创建属性动画,从隐藏到显示*/
+        ObjectAnimator topToBottom = ObjectAnimator.ofFloat(view, "alpha", 0, 1).setDuration(500);
+        /*初始化动画组合器*/
+        AnimatorSet animator = new AnimatorSet();
+        /*组合动画*/
+        animator.play(bottomToTop).after(topToBottom).after(2000);
+        /*添加动画结束回调*/
+        animator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                /*删除View*/
+                hideView(mActivity, view);
+            }
+        });
+        /*添加View到当前显示的Activity*/
+        showVie(mActivity, view);
+        /*启动动画*/
+        animator.start();
+    }
+
+    /**
+     * 隐藏View
+     *
+     * @param view 需要从Activity中移除的视图
+     */
+    private static void hideView(Activity mActivity, View view) {
+        /*Activity不为空并且没有被释放掉*/
+        if (mActivity != null && !mActivity.isFinishing()) {
+            /*获取Activity顶层视图*/
+            ViewGroup root = ((ViewGroup) mActivity.getWindow().getDecorView());
+            /*如果Activity中存在View对象则删除*/
+            if (root.indexOfChild(view) != -1) {
+                /*从顶层视图中删除*/
+                root.removeView(view);
+            }
+        }
+    }
+
+    /**
+     * 显示View
+     *
+     * @param view 需要显示到Activity的视图
+     */
+    private static void showVie(Activity mActivity, View view) {
+        /*Activity不为空并且没有被释放掉*/
+        if (mActivity != null && !mActivity.isFinishing()) {
+            /*获取Activity顶层视图,并添加自定义View*/
+            ((ViewGroup) mActivity.getWindow().getDecorView()).addView(view);
+        }
+    }
+
+    /**
+     * 从dp单位转换为px
+     *
+     * @param dp dp值
+     * @return 返回转换后的px值
+     */
+    private static int dp2px(int dp) {
+        return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
+    }
+
+    /**
+     * 获取状态栏高度
+     *
+     * @return
+     */
+    private static int getStatusBarHeight() {
+        Resources resources = Utils.getApp().getResources();
+        int resourceId = resources.getIdentifier("status_bar_height", "dimen", "android");
+        int height = resources.getDimensionPixelSize(resourceId);
+        return height;
+    }
+
+    public static void toastTime(final Activity mActivity, final NotificationEntity entity) {
+        Log.e("entry-view",entity.get_$0().toString());
+        int number = entity.get_$0().size() * 2600;
+        /**
+         * CountDownTimer timer = new CountDownTimer(number, 2600)中，
+         * 第一个参数表示总时间，第二个参数表示间隔时间。
+         * 意思就是每隔一秒会回调一次方法onTick，然后2.6秒之后会回调onFinish方法。
+         */
+        CountDownTimer timer = new CountDownTimer(number, 2600) {
+            public void onTick(long millisUntilFinished) {
+                if (page >= entity.get_$0().size()) return;
+                View inflate = mActivity.getLayoutInflater().inflate(R.layout.view_notification_toast, null);
+                Glide.with(Utils.getApp()).load(entity.get_$0().get(page).getPortrait()).apply(new RequestOptions().circleCrop()).into((ImageView) inflate.findViewById(R.id.notification_icon));
+                TextView notification_title = inflate.findViewById(R.id.notification_title);
+                notification_title.setText(entity.get_$0().get(page).getNick_name());
+                TextView notification_content = inflate.findViewById(R.id.notification_content);
+                notification_content.setText(entity.get_$0().get(page).getMsg());
+                NotificationView.showView(mActivity,inflate);
+                page++;
+
+            }
+
+            public void onFinish() {
+                page = 0;
+            }
+        };
+        //调用 CountDownTimer 对象的 start() 方法开始倒计时，也不涉及到线程处理
+        timer.start();
+    }
+
+}
