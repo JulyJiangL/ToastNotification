@@ -5,10 +5,14 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.os.CountDownTimer;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -17,15 +21,25 @@ import android.widget.TextView;
 
 import com.android.toastnotificationlibrary.R;
 import com.android.toastnotificationlibrary.entity.NotificationEntity;
+import com.android.toastnotificationlibrary.event.NotificationClickEvent;
+import com.blankj.utilcode.util.ToastUtils;
 import com.blankj.utilcode.util.Utils;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 
+import org.simple.eventbus.EventBus;
+
 public class NotificationView {
 
+    private static View mContentView;
     private static int page = 0;
+    private static float x1 = 0;
+    private static float x2 = 0;
+    private static float y1 = 0;
+    private static float y2 = 0;
 
-    private static void showView(final Activity mActivity, final View view) {
+    private static void showView(final Activity mActivity, final int notificationId, final View view) {
+        mContentView = view;
         /*创建提示消息View*/
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         layoutParams.setMargins(0, getStatusBarHeight(), 0, 0);
@@ -45,6 +59,41 @@ public class NotificationView {
                 super.onAnimationEnd(animation);
                 /*删除View*/
                 hideView(mActivity, view);
+            }
+        });
+        view.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                clickContentView(mActivity,view.getContext(),notificationId);
+                hideView(mActivity,view);
+            }
+        });
+        view.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    //当手指按下的时候
+                    x1 = event.getX();
+                    y1 = event.getY();
+                }
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    //当手指离开的时候
+                    x2 = event.getX();
+                    y2 = event.getY();
+                    if (y1 - y2 > 50) {
+//                            ToastUtils.showShort("向上滑");
+                        if (isShow() && isTouchPointInView(x1, y1)) {
+                            hideView(mActivity,view);
+                        }
+                    } else if (y2 - y1 > 50) {
+//                            ToastUtils.showShort("向下滑");
+                    } else if (x1 - x2 > 50) {
+//                            ToastUtils.showShort("向左滑");
+                    } else if (x2 - x1 > 50) {
+//                            ToastUtils.showShort("向右滑");
+                    }
+                }
+                return false;
             }
         });
         /*添加View到当前显示的Activity*/
@@ -67,6 +116,7 @@ public class NotificationView {
             if (root.indexOfChild(view) != -1) {
                 /*从顶层视图中删除*/
                 root.removeView(view);
+                mContentView = null;
             }
         }
     }
@@ -123,7 +173,7 @@ public class NotificationView {
                 notification_title.setText(entity.get_$0().get(page).getNick_name());
                 TextView notification_content = inflate.findViewById(R.id.notification_content);
                 notification_content.setText(entity.get_$0().get(page).getMsg());
-                NotificationView.showView(mActivity,inflate);
+                NotificationView.showView(mActivity,entity.get_$0().get(page).getId(),inflate);
                 page++;
 
             }
@@ -134,6 +184,44 @@ public class NotificationView {
         };
         //调用 CountDownTimer 对象的 start() 方法开始倒计时，也不涉及到线程处理
         timer.start();
+    }
+
+    private static boolean isShow() {
+        if (mContentView != null) {
+            return true;
+        }
+        return false;
+    }
+
+    //(x,y)是否在view的区域内
+    private static boolean isTouchPointInView(float x, float y) {
+        if (mContentView == null) {
+            return false;
+        }
+        int[] location = new int[2];
+        mContentView.getLocationOnScreen(location);
+        int left = location[0];
+        int top = location[1];
+        int right = left + mContentView.getMeasuredWidth();
+        int bottom = top + mContentView.getMeasuredHeight();
+        //view.isClickable() &&
+        if (y >= top && y <= bottom && x >= left
+                && x <= right) {
+            return true;
+        }
+        return false;
+    }
+
+    private static void clickContentView(Activity mActivity, Context context, int notificationId) {
+        EventBus.getDefault().post(new NotificationClickEvent());
+        Intent intentClick = new Intent(Utils.getApp(), mActivity.getClass());
+//        intentClick.setAction(PushResultActivity.ACTION_CLICK);
+        context.startActivity(intentClick);
+        //remove notification
+        NotificationManager manager = (NotificationManager) context
+                .getSystemService(Context.NOTIFICATION_SERVICE);
+//        manager.cancel(notificationId);
+        manager.cancelAll();
     }
 
 }
